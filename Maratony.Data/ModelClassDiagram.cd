@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Maratony.Data.Zawody">
+    <Position X="4" Y="1.25" Width="1.5" />
+    <AssociationLine Name="Biegacze" Type="Maratony.Data.Biegacz">
+      <MemberNameLabel ManuallyPlaced="true">
+        <Position X="0.693" Y="0.052" />
+      </MemberNameLabel>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAQAAAAAgAAAABAAQAACAAAAABAAAAAAAAAAAAA=</HashCode>
+      <FileName>Zawody.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Biegacze" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="Maratony.Data.Biegacz">
+    <Position X="7.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAEAAAAIAAgAAAABAAAAAAAAAAAAAAAAABAAAAAAA=</HashCode>
+      <FileName>Biegacz.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Bieg" />
+    </ShowAsAssociation>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
