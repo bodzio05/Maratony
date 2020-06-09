@@ -27,7 +27,7 @@
                   AutoGenerateColumns="False"
                   CanUserAddRows="False" 
                   SelectionMode="Extended"
-                  ItemsSource="{Binding Biegacze, NotifyOnSourceUpdated=True}"
+                  ItemsSource="{Binding BiegaczeWBiegu, NotifyOnSourceUpdated=True}"
                   SelectedItem="{Binding WybraniBiegacze, Mode=OneWay}"
                   >
             <i:Interaction.Triggers>
@@ -37,11 +37,10 @@
             </i:Interaction.Triggers>
             
             <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding BiegaczID}"/>
                 <DataGridTextColumn Header="Imie" Binding="{Binding Imie}"/>
                 <DataGridTextColumn Header="Nazwisko" Binding="{Binding Nazwisko}"/>
                 <DataGridTextColumn Header="Czas" Binding="{Binding Czas}"/>
-                <DataGridTextColumn Header="ID" Binding="{Binding ID}"/>
-                <DataGridTextColumn Header="Bieg" Binding="{Binding Bieg.Miejsce}"/>
             </DataGrid.Columns>
         </DataGrid>
 
@@ -72,7 +71,7 @@
             <Button Margin="5"
                     Grid.Column="0"
                     Content="Dodaj" 
-                    Command="{Binding SaveCommand}"/>
+                    Command="{Binding AddCommand}"/>
             <Button Margin="5"
                     Grid.Column="2"
                     Content="Wyczyść" 

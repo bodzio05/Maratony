@@ -10,15 +10,11 @@ using System.Windows.Controls;
 
 namespace Maratony.UI.ViewModel
 {
-    // Wersja jest delikatnie rozszerzona: 
-    //  - dodałem przycisk Usuń, który usuwa wybranych w DataGridzie zawodników oraz zwalnia ich numer ID.
-    //  - dodałem nowe TextBoxy do wpisywania Imienia i Nazwiska biegacza. Jeśli pole jest puste to wpisuje się "Imię" lub "Nazwisko".
-    //  - dodawanie nowego biegacza nada mu pierwszy wolny numer ID.
     public class MaintenanceFormViewModel : ViewModelBase
     {
         #region Properties       
-        private Zawody wybraneZawody;
-        public Zawody WybraneZawody
+        private ZawodyEF wybraneZawody;
+        public ZawodyEF WybraneZawody
         {
             get
             {
@@ -28,12 +24,27 @@ namespace Maratony.UI.ViewModel
             {
                 this.wybraneZawody = value;
                 this.OnPropertyChanged();
-                this.OdswiezBiegaczy();  // dodane ponizej
+                this.OdswiezAktywnychBiegaczy();
+                this.OnPropertyChanged(nameof(BiegaczeWBiegu));
             }
         }
 
-        private IEnumerable<Biegacz> biegacze;
-        public IEnumerable<Biegacz> Biegacze
+        private List<BiegaczEF> biegaczeWBiegu;
+        public List<BiegaczEF> BiegaczeWBiegu
+        {
+            get 
+            { 
+                return biegaczeWBiegu; 
+            }
+            set 
+            { 
+                biegaczeWBiegu = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private List<BiegaczEF> biegacze;
+        public List<BiegaczEF> Biegacze
         {
             get
             {
@@ -46,8 +57,8 @@ namespace Maratony.UI.ViewModel
             }
         }
 
-        private IEnumerable<Zawody> zawody;
-        public IEnumerable<Zawody> Zawody
+        private List<ZawodyEF> zawody;
+        public List<ZawodyEF> Zawody
         {
             get
             {
@@ -88,8 +99,8 @@ namespace Maratony.UI.ViewModel
             }
         }
 
-        private List<Biegacz> wybraniBiegacze = new List<Biegacz>();
-        public List<Biegacz> WybraniBiegacze
+        private List<BiegaczEF> wybraniBiegacze = new List<BiegaczEF>();
+        public List<BiegaczEF> WybraniBiegacze
         {
             get
             {
@@ -104,11 +115,11 @@ namespace Maratony.UI.ViewModel
         #endregion
 
         #region Fields
-        private MaratonyModel model = new MaratonyModel();
+        private MaratonyModelEF model = new MaratonyModelEF();
         #endregion
 
         #region Commands
-        public ICommand SaveCommand
+        public ICommand AddCommand
         {
             get; private set;
         }
@@ -132,30 +143,34 @@ namespace Maratony.UI.ViewModel
         #region Constructors
         public MaintenanceFormViewModel()
         {
-            Task.Run(() => Init());
+            Init();
         }
 
-        public MaintenanceFormViewModel(bool init)
-        {
-            wybraniBiegacze = new List<Biegacz>();
-            if (init)
-                Init();
-        }
         #endregion
 
         #region Private methods
         private void DodajBiegacza()
         {
-            model.DodajBiegacza(this.WybraneZawody.ID, 
-                (imieTextBox == null || imieTextBox == "") ? "Imie" : imieTextBox, 
+            model.DodajBiegacza(this.WybraneZawody.ZawodyID,
+                (imieTextBox == null || imieTextBox == "") ? "Imie" : imieTextBox,
                 (nazwiskoTextBox == null || nazwiskoTextBox == "") ? "Nazwisko" : nazwiskoTextBox);
             this.OdswiezBiegaczy();
+            this.OdswiezAktywnychBiegaczy();
         }
 
         private void OdswiezBiegaczy()
         {
             this.Biegacze = null;
-            this.Biegacze = this.WybraneZawody?.Biegacze;
+            this.Biegacze = MaratonyModelEF.PobierzBiegaczy();
+        }
+
+        private void OdswiezAktywnychBiegaczy()
+        {
+            this.BiegaczeWBiegu = null;
+            if (WybraneZawody != null)
+            {
+                this.BiegaczeWBiegu = Biegacze.Where(b => b.ZawodyID == WybraneZawody.ZawodyID).ToList();
+            }
         }
 
         private bool CzyMoznaDodacBiegacza()
@@ -165,7 +180,8 @@ namespace Maratony.UI.ViewModel
 
         private void OdswiezZawody()
         {
-            this.Zawody = model.ListaZawodow;
+            this.Zawody = null;
+            this.Zawody = MaratonyModelEF.PobierzZawody();
         }
 
         private void WyczyscWybraneZawody()
@@ -177,10 +193,11 @@ namespace Maratony.UI.ViewModel
         {
             foreach (var biegacz in WybraniBiegacze)
             {
-                model.UsunBiegacza(biegacz.ID,WybraneZawody.ID);
+                model.UsunBiegacza(biegacz.BiegaczID);
             }
 
             OdswiezBiegaczy();
+            OdswiezAktywnychBiegaczy();
         }
 
         private bool CzyMoznaUsunacBiegaczy()
@@ -202,7 +219,7 @@ namespace Maratony.UI.ViewModel
         private void AktualizujZaznaczonychBiegaczy(object param)
         {
             System.Collections.IList items = (System.Collections.IList)param;
-            var collection = items.Cast<Biegacz>().ToList();
+            var collection = items.Cast<BiegaczEF>().ToList();
 
             this.WybraniBiegacze = collection;
         }
@@ -216,9 +233,12 @@ namespace Maratony.UI.ViewModel
         #region Internal Methods
         internal void Init()
         {
+            MaratonyModelEF.ClearDb();
+
             this.PrzykladoweDane();
             this.OdswiezZawody();
-            this.SaveCommand = new RelayCommand(
+            this.OdswiezBiegaczy();
+            this.AddCommand = new RelayCommand(
                 action => this.DodajBiegacza(),
                 enable => this.CzyMoznaDodacBiegacza());
             this.ClearCommand = new RelayCommand(
@@ -230,15 +250,17 @@ namespace Maratony.UI.ViewModel
             this.DataGridSelectionChangedCommand = new RelayCommand(
                 (parameter) => this.AktualizujZaznaczonychBiegaczy((parameter)),
                 enable => this.CzyMoznaAktualizowacBiegaczy());
+
+            WybraneZawody = Zawody.FirstOrDefault();
         }
 
         internal void PrzykladoweDane()
         {
             model.DodajZawody("Kraków", new DateTime(2016, 1, 10), 11.6);
             model.DodajZawody("Warszawa", new DateTime(2016, 1, 23), 6);
-            model.DodajBiegacza(model.ListaZawodow[0].ID, "Młody", "Bóg");
-            model.DodajBiegacza(model.ListaZawodow[1].ID, "Jan", "Kowalski");
-            model.DodajBiegacza(model.ListaZawodow[1].ID, "Adam", "Nowak");
+            model.DodajBiegacza(1,"Młody", "Bóg");
+            model.DodajBiegacza(1, "Jan", "Kowalski");
+            model.DodajBiegacza(2, "Adam", "Nowak");
         }
         #endregion
     }
